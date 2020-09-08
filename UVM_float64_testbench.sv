@@ -23,7 +23,7 @@ endclass
 
 
 class gen_item_seq extends uvm_sequence;
-  `uvm_object_utils(gen_item_seq)
+  `uvm_object_utils(gen_item_seq)//è¿™å¥`uvm_object_utils(gen_item_seq)æ ¸å¿ƒæ˜¯è°ƒç”¨äº†ä¸€ä¸ªæ¨¡æ¿ç±»registryï¼Œregistryç±»è°ƒç”¨äº†factoryç±»ï¼Œå¾€factoryç±»é‡Œé¢æ”¾äº†ä¸ªæ•°ç»„ï¼Œæ•°ç»„é‡Œå­˜ç€æ³¨å†Œçš„ç±»çš„ç±»å‹å’Œåå­—
   function new(string name="gen_item_seq");
     super.new(name);
   endfunction
@@ -68,7 +68,7 @@ class driver extends uvm_driver #(transaction_item);
   function new(string name = "driver", uvm_component parent=null);
     super.new(name, parent);
   endfunction
-  //×¢²áinterface
+  //æ³¨å†Œinterface
   virtual DUT_if vif;
   uvm_event ev;
   
@@ -77,7 +77,7 @@ class driver extends uvm_driver #(transaction_item);
     if (!uvm_config_db#(virtual DUT_if)::get(this, "", "DUT_vif", vif))
       `uvm_fatal("DRV", "Could not get vif")
     ev = uvm_event_pool::get_global("ev_ab");
-    //ev.reset;//»á±¨´í£¬¿ÉÄÜÊÇÃ»ÓĞµÚÒ»´Îtrigger¾ÍÃ»ÕæÕıÀı»¯Õâ¸öevent
+    //ev.reset;//ä¼šæŠ¥é”™ï¼Œå¯èƒ½æ˜¯æ²¡æœ‰ç¬¬ä¸€æ¬¡triggerå°±æ²¡çœŸæ­£ä¾‹åŒ–è¿™ä¸ªevent
   endfunction
 
   
@@ -87,14 +87,14 @@ class driver extends uvm_driver #(transaction_item);
     forever begin
       transaction_item m_item;
       `uvm_info("DRV", $sformatf("{run_phase} Wait for item from sequencer"), UVM_LOW)
-      //if(ev.is_off)//ÕâÑù²»ÄÜÈÃevÌáÇ°Àı»¯£¬»áÈÃÏÂÃæµÄ²¿·ÖÏİÈëËÀÑ­»·
+      //if(ev.is_off)//è¿™æ ·ä¸èƒ½è®©evæå‰ä¾‹åŒ–ï¼Œä¼šè®©ä¸‹é¢çš„éƒ¨åˆ†é™·å…¥æ­»å¾ªç¯
       begin
-	      //fork//¸Ä½ø³Ì¿ØÖÆÇødrive_itemÀïÃæ¸Ä£¬²»Òªµ÷get_next_itemÕâÖÖÏµÍ³Ä¬ÈÏº¯ÊıµÄË³Ğò
+	      //fork//æ”¹è¿›ç¨‹æ§åˆ¶åŒºdrive_itemé‡Œé¢æ”¹ï¼Œä¸è¦è°ƒget_next_itemè¿™ç§ç³»ç»Ÿé»˜è®¤å‡½æ•°çš„é¡ºåº
       seq_item_port.get_next_item(m_item);
-      drive_item(m_item);//30·¢µÚÒ»¸ö 1030·¢µÚ¶ş¸ö
-      //ev = uvm_event_pool::get_global("ev_ab");//·ÅÔÚbuild_phaseºÃÒ»µã
+      drive_item(m_item);//30å‘ç¬¬ä¸€ä¸ª 1030å‘ç¬¬äºŒä¸ª
+      //ev = uvm_event_pool::get_global("ev_ab");//æ”¾åœ¨build_phaseå¥½ä¸€ç‚¹
       `uvm_info("DRV", $sformatf("{run_phase} trigger event"), UVM_LOW)
-      //ev.trigger();//µÚÒ»´ÎÊÇ1050²Å´¥·¢ µÚ¶ş´Î¿ªÊ¼²ÅÊÇÊÇ¼°Ê±µÄ2030Á¢¿Ì´¥·¢
+      //ev.trigger();//ç¬¬ä¸€æ¬¡æ˜¯1050æ‰è§¦å‘ ç¬¬äºŒæ¬¡å¼€å§‹æ‰æ˜¯æ˜¯åŠæ—¶çš„2030ç«‹åˆ»è§¦å‘
       //join
       seq_item_port.item_done();
       end
@@ -109,11 +109,11 @@ class driver extends uvm_driver #(transaction_item);
           `uvm_info(get_type_name(), $sformatf("{drive_item} a=0x%0h b=0x%0h correct_value=0x%0h", m_item.a, m_item.b, m_item.correct_value), UVM_LOW)
     #1000;
     ev.trigger();
-    #100;//µÚÒ»´Îtrigger eventµÄÊ±ºò»á³öÏÖÑÓÊ±Ò»¸öÖÜÆÚ£¬ËùÒÔÒªÔÚdriveÀïÃæ°ÑÕâ¸öÑÓÊ±Ò²¸øÉÏ£¬²»È»»á³öÏÖµÚÒ»×é³ö´íµÄÇé¿ö£¬Ô­ÒòÊÇµÚÒ»×éÊıµÄevent trigger±ÈµÚ¶ş×éÊıµÄĞ´ÈëÂıÁËÒ»¸öÖÜÆÚ£¬µ¼ÖÂ30ns·¢µÄµÚÒ»×éreturn_value¸úµÚ¶ş×éµÄcorrect_value½øĞĞ±È½ÏÁË
+    #100;//ç¬¬ä¸€æ¬¡trigger eventçš„æ—¶å€™ä¼šå‡ºç°å»¶æ—¶ä¸€ä¸ªå‘¨æœŸï¼Œæ‰€ä»¥è¦åœ¨driveé‡Œé¢æŠŠè¿™ä¸ªå»¶æ—¶ä¹Ÿç»™ä¸Šï¼Œä¸ç„¶ä¼šå‡ºç°ç¬¬ä¸€ç»„å‡ºé”™çš„æƒ…å†µï¼ŒåŸå› æ˜¯ç¬¬ä¸€ç»„æ•°çš„event triggeræ¯”ç¬¬äºŒç»„æ•°çš„å†™å…¥æ…¢äº†ä¸€ä¸ªå‘¨æœŸï¼Œå¯¼è‡´30nså‘çš„ç¬¬ä¸€ç»„return_valueè·Ÿç¬¬äºŒç»„çš„correct_valueè¿›è¡Œæ¯”è¾ƒäº†
   endtask
 endclass
 
-class monitor extends uvm_monitor;//monitorÊôÓÚagent(a0)£¬ËùÒÔËüÊÇÓĞÈ¨ÏŞÀ´È¡vifµÄ
+class monitor extends uvm_monitor;//monitorå±äºagent(a0)ï¼Œæ‰€ä»¥å®ƒæ˜¯æœ‰æƒé™æ¥å–vifçš„
   `uvm_component_utils(monitor)
   function new(string name="monitor", uvm_component parent=null);
     super.new(name, parent);
@@ -133,7 +133,7 @@ class monitor extends uvm_monitor;//monitorÊôÓÚagent(a0)£¬ËùÒÔËüÊÇÓĞÈ¨ÏŞÀ´È¡vifµ
   virtual task run_phase(uvm_phase phase);
     super.run_phase(phase);
       ev = uvm_event_pool::get_global("ev_ab");
-      `uvm_info(get_type_name(),$sformatf("{run_phase} waiting for event triggered for first time"),UVM_LOW)//get_type_name getµÄ¾ÍÊÇnewÀïÃæµÄstring name = monitor
+      `uvm_info(get_type_name(),$sformatf("{run_phase} waiting for event triggered for first time"),UVM_LOW)//get_type_name getçš„å°±æ˜¯newé‡Œé¢çš„string name = monitor
       ev.wait_trigger;
       sample_port("Thread0");
   endtask
@@ -217,7 +217,7 @@ class agent extends uvm_agent;
 
 endclass
 
-class env extends uvm_env;//envÃ»ÓĞÖ±½ÓÓÃµ½vif£¬ËùÒÔ¾Í²»ÓÃconfig_db::get
+class env extends uvm_env;//envæ²¡æœ‰ç›´æ¥ç”¨åˆ°vifï¼Œæ‰€ä»¥å°±ä¸ç”¨config_db::get
   `uvm_component_utils(env)
   function new(string name="env", uvm_component parent=null);
     super.new(name, parent);
@@ -263,7 +263,7 @@ class test extends uvm_test;
     $display("apply_reset");
     apply_reset();
     
-    seq.randomize();//Ö»randomize×Ô¼ºÓĞµÄÑ­»·´ÎÊınum£¬È»ºóÖ´ĞĞbody()£¬À´Ö´ĞĞnum´ÎµÄseq_itemµÄÀı»¯
+    seq.randomize();//åªrandomizeè‡ªå·±æœ‰çš„å¾ªç¯æ¬¡æ•°numï¼Œç„¶åæ‰§è¡Œbody()ï¼Œæ¥æ‰§è¡Œnumæ¬¡çš„seq_itemçš„ä¾‹åŒ–
     seq.start(e0.a0.s0);
     phase.drop_objection(this);
   endtask
@@ -316,7 +316,7 @@ float64_add_DUT_RTL float64_add_DUT_RTL_1(
   
   initial begin
     clk <= 0;
-    uvm_config_db#(virtual DUT_if)::set(null, "uvm_test_top", "DUT_vif", _if);//×¢²áinterface
+    uvm_config_db#(virtual DUT_if)::set(null, "uvm_test_top", "DUT_vif", _if);//æ³¨å†Œinterface
     run_test("test");
   end
   
