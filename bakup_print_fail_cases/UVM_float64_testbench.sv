@@ -43,20 +43,20 @@ class transaction_item extends uvm_sequence_item;
     a[51:0] != 0;
   }
 
+
+/*
   constraint c_normal{
-    a[62:52] != 11'hfff; 
+    a[62:52] != 11'bfff; 
     //当指数部分全为0的时候，尾数要也全为0，这样就是0，是个正常数，不然就会变成NAN
     a[62:52] == 0->a[51:0] == 0;
   }
-  
+  */
   
   function new(string name = "transaction_item");
     super.new(name);
   endfunction
 endclass
 
-typedef enum {NAN_FLAG,POS_FLAG,NEG_FLAG,ZERO_FLAG,NORMAL_FLAG} flags;
-flags flags_inst;
 
 class gen_item_seq extends uvm_sequence;
   `uvm_object_utils(gen_item_seq)//这句`uvm_object_utils(gen_item_seq)核心是调用了一个模板类registry，registry类调用了factory类，往factory类里面放了个数组，数组里存着注册的类的类型和名字
@@ -88,67 +88,21 @@ end
 
       real a_real;
       real b_real;
-      real correct_value_real;//不能直接在下面声明real，emmm   
-/*
-      static nan_flag = 0;
-      static pos_flag = 0;
-      static neg_flag = 0;
-      static zero_flag = 0;
-      static normal_flag = 0;
-*/
-
-  virtual task body();//body的调用逻辑还是要抽空去看一看
-  transaction_item m_item = transaction_item::type_id::create("m_item");
-    flags_inst = NAN_FLAG;
-    m_item.constraint_mode(0);
-    m_item.c_nan.constraint_mode(1);
-    transcation_loop(m_item);
-    $display("\n count_pass_nan = %d",scoreboard.count_pass_nan);
-    $display("\n count_pass_total = %d    count_pass_total = %d",scoreboard.count_pass_total,scoreboard.count_total);
-
-    flags_inst = POS_FLAG;
-    m_item.constraint_mode(0);
-    m_item.c_pos_inf.constraint_mode(1);
-    transcation_loop(m_item);
-    $display("\n count_pass_pos = %d",scoreboard.count_pass_pos);
-    $display("\n count_pass_total = %d    count_pass_total = %d",scoreboard.count_pass_total,scoreboard.count_total);
-
-    flags_inst = NEG_FLAG;
-    m_item.constraint_mode(0);
-    m_item.c_neg_inf.constraint_mode(1);
-    transcation_loop(m_item);
-    $display("\n count_pass_nan = %d",scoreboard.count_pass_neg);
-    $display("\n count_pass_total = %d    count_pass_total = %d",scoreboard.count_pass_total,scoreboard.count_total);
-
-    flags_inst = ZERO_FLAG;
-    m_item.constraint_mode(0);
-    m_item.c_zero.constraint_mode(1);
-    transcation_loop(m_item);
-    $display("\n count_pass_nan = %d",scoreboard.count_pass_zero);
-    $display("\n count_pass_total = %d    count_pass_total = %d",scoreboard.count_pass_total,scoreboard.count_total);
-
-    flags_inst = NORMAL_FLAG;
-    m_item.constraint_mode(0);
-    m_item.c_normal.constraint_mode(1);
-    transcation_loop(m_item);
-    $display("\n count_pass_nan = %d",scoreboard.count_pass_normal);
-    $display("\n count_pass_total = %d    count_pass_total = %d",scoreboard.count_pass_total,scoreboard.count_total);
-
-  endtask
-
-  task transcation_loop(transaction_item m_item);
-  for (int i = 0; i < num; i ++) begin
-    	//transaction_item m_item = transaction_item::type_id::create("m_item");
+      real correct_value_real;//不能直接在下面声明real，emmm
+  virtual task body();
+    for (int i = 0; i < num; i ++) begin
+    	transaction_item m_item = transaction_item::type_id::create("m_item");
       //禁止所有约束
       //使用禁止，也会改变种子
-      //m_item.constraint_mode(0);
+      m_item.constraint_mode(0);
       //m_item.c_nan.constraint_mode(0);//光设这个为0，种子会和上面设全体一样
       //开启某一个约束
       //m_item.c_nan.constraint_mode(1);
       //m_item.c_pos_inf.constraint_mode(1);
       //m_item.c_neg_inf.constraint_mode(1);
-      //m_item.c_zero.constraint_mode(1);
+      m_item.c_zero.constraint_mode(1);
       //m_item.c_normal.constraint_mode(1);
+     
 
     	start_item(m_item);
     	m_item.randomize();
@@ -332,13 +286,7 @@ class scoreboard extends uvm_scoreboard;
   endfunction
   
   uvm_analysis_imp #(transaction_item, scoreboard) m_analysis_imp;
-  static int count_total = 0;
-  static int count_pass_total = 0;
-  static int count_pass_nan = 0;
-  static int count_pass_pos = 0;
-  static int count_pass_neg = 0;
-  static int count_pass_zero = 0;
-  static int count_pass_normal = 0;
+  static int count_pass = 0;
     
   virtual function void build_phase(uvm_phase phase);
   ////`uvm_info("SB", $sformatf("{build_phase} time = %0t build uvm_analysis_imp",$time), UVM_LOW)
@@ -348,52 +296,20 @@ class scoreboard extends uvm_scoreboard;
   
   virtual function write(transaction_item item);      
      begin
-       count_total = count_total+1;
 	     if(item.return_value == item.correct_value)
 	     begin
-         count_pass_total = count_pass_total+1;
-         /*
-         switch(flags_inst)
-         {
-           case NAN_FLAG:
-           count_pass_nan++;
-           case POS_FLAG:
-           count_pass_pos++;
-           case NEG_FLAG:
-           count_pass_neg++;
-           case ZERO_FLAG:
-           count_pass_zero++;
-           case NORMAL_FLAG:
-           count_pass_normal++;
-         }
-         */
-         case (flags_inst)
-           NAN_FLAG:
-           count_pass_nan++;
-           POS_FLAG:
-           count_pass_pos++;
-           NEG_FLAG:
-           count_pass_neg++;
-           ZERO_FLAG:
-           count_pass_zero++;
-           NORMAL_FLAG:
-           count_pass_normal++;
-           default: 
-           ;
-         endcase
-
-
+         count_pass = count_pass+1;
 		     //$display("---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------");
           ////`uvm_info("SCBD", $sformatf("PASS! time = %0t \n  ('-') compare result \n a=0x%h \n b=0x%h \n return_value=0x%h \n correct_value=0x%h ",$time, item.a, item.b, item.return_value,item.correct_value), UVM_LOW)
           //`uvm_info("SCBD", $sformatf("PASS! time = %0t \n  ('-') compare result \n a=0x%h \n b=0x%h \n return_value=0x%h \n correct_value=0x%h \n",$time, item.a, item.b, item.return_value,item.correct_value), UVM_LOW)
-		     //$display("\ncount_pass = %d",count_pass);//在这通过static的count_pass来实现输出正确的个数
+		     $display("\ncount_pass = %d",count_pass);//在这通过static的count_pass来实现输出正确的个数
          //$display("---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------");
 	     end
   else
   begin
 		     //$display("---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------");
           ////`uvm_info("SCBD", $sformatf("FAIL! time = %0t \n  ('-') a=0x%h b=0x%h return_value=0x%h correct_value=0x%h ",$time, item.a, item.b, item.return_value,item.correct_value), UVM_LOW)
-          //`uvm_info("SCBD", $sformatf("FAIL! time = %0t \n  ('-') \n a=0x%h \n b=0x%h \n return_value=0x%h \n correct_value=0x%h \n",$time, item.a, item.b, item.return_value,item.correct_value), UVM_LOW)
+          `uvm_info("SCBD", $sformatf("FAIL! time = %0t \n  ('-') \n a=0x%h \n b=0x%h \n return_value=0x%h \n correct_value=0x%h \n",$time, item.a, item.b, item.return_value,item.correct_value), UVM_LOW)
 		     //$display("---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------");
 	     end
       end

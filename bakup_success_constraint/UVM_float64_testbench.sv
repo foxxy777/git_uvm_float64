@@ -43,20 +43,20 @@ class transaction_item extends uvm_sequence_item;
     a[51:0] != 0;
   }
 
+
+/*
   constraint c_normal{
-    a[62:52] != 11'hfff; 
+    a[62:52] != 11'bfff; 
     //当指数部分全为0的时候，尾数要也全为0，这样就是0，是个正常数，不然就会变成NAN
     a[62:52] == 0->a[51:0] == 0;
   }
-  
+  */
   
   function new(string name = "transaction_item");
     super.new(name);
   endfunction
 endclass
 
-typedef enum {NAN_FLAG,POS_FLAG,NEG_FLAG,ZERO_FLAG,NORMAL_FLAG} flags;
-flags flags_inst;
 
 class gen_item_seq extends uvm_sequence;
   `uvm_object_utils(gen_item_seq)//这句`uvm_object_utils(gen_item_seq)核心是调用了一个模板类registry，registry类调用了factory类，往factory类里面放了个数组，数组里存着注册的类的类型和名字
@@ -66,7 +66,7 @@ class gen_item_seq extends uvm_sequence;
   
   rand int num; 	
   
-  constraint c1 { num == 1000; }
+  constraint c1 { num == 100; }
   
 
 /*
@@ -88,73 +88,27 @@ end
 
       real a_real;
       real b_real;
-      real correct_value_real;//不能直接在下面声明real，emmm   
-/*
-      static nan_flag = 0;
-      static pos_flag = 0;
-      static neg_flag = 0;
-      static zero_flag = 0;
-      static normal_flag = 0;
-*/
-
-  virtual task body();//body的调用逻辑还是要抽空去看一看
-  transaction_item m_item = transaction_item::type_id::create("m_item");
-    flags_inst = NAN_FLAG;
-    m_item.constraint_mode(0);
-    m_item.c_nan.constraint_mode(1);
-    transcation_loop(m_item);
-    $display("\n count_pass_nan = %d",scoreboard.count_pass_nan);
-    $display("\n count_pass_total = %d    count_pass_total = %d",scoreboard.count_pass_total,scoreboard.count_total);
-
-    flags_inst = POS_FLAG;
-    m_item.constraint_mode(0);
-    m_item.c_pos_inf.constraint_mode(1);
-    transcation_loop(m_item);
-    $display("\n count_pass_pos = %d",scoreboard.count_pass_pos);
-    $display("\n count_pass_total = %d    count_pass_total = %d",scoreboard.count_pass_total,scoreboard.count_total);
-
-    flags_inst = NEG_FLAG;
-    m_item.constraint_mode(0);
-    m_item.c_neg_inf.constraint_mode(1);
-    transcation_loop(m_item);
-    $display("\n count_pass_nan = %d",scoreboard.count_pass_neg);
-    $display("\n count_pass_total = %d    count_pass_total = %d",scoreboard.count_pass_total,scoreboard.count_total);
-
-    flags_inst = ZERO_FLAG;
-    m_item.constraint_mode(0);
-    m_item.c_zero.constraint_mode(1);
-    transcation_loop(m_item);
-    $display("\n count_pass_nan = %d",scoreboard.count_pass_zero);
-    $display("\n count_pass_total = %d    count_pass_total = %d",scoreboard.count_pass_total,scoreboard.count_total);
-
-    flags_inst = NORMAL_FLAG;
-    m_item.constraint_mode(0);
-    m_item.c_normal.constraint_mode(1);
-    transcation_loop(m_item);
-    $display("\n count_pass_nan = %d",scoreboard.count_pass_normal);
-    $display("\n count_pass_total = %d    count_pass_total = %d",scoreboard.count_pass_total,scoreboard.count_total);
-
-  endtask
-
-  task transcation_loop(transaction_item m_item);
-  for (int i = 0; i < num; i ++) begin
-    	//transaction_item m_item = transaction_item::type_id::create("m_item");
+      real correct_value_real;//不能直接在下面声明real，emmm
+  virtual task body();
+    for (int i = 0; i < num; i ++) begin
+    	transaction_item m_item = transaction_item::type_id::create("m_item");
       //禁止所有约束
       //使用禁止，也会改变种子
-      //m_item.constraint_mode(0);
+      m_item.constraint_mode(0);
       //m_item.c_nan.constraint_mode(0);//光设这个为0，种子会和上面设全体一样
       //开启某一个约束
-      //m_item.c_nan.constraint_mode(1);
+      m_item.c_nan.constraint_mode(1);
       //m_item.c_pos_inf.constraint_mode(1);
       //m_item.c_neg_inf.constraint_mode(1);
       //m_item.c_zero.constraint_mode(1);
       //m_item.c_normal.constraint_mode(1);
+     
 
     	start_item(m_item);
     	m_item.randomize();
     
       a_real = $bitstoreal(m_item.a);
-      //`uvm_info("SEQ", $sformatf("{body_randomize} time = %0t \n ('-') ('-') ('-') \n m_item.a=%h \n a_real=%h \n\n ",$time,m_item.a,a_real), UVM_LOW)
+      `uvm_info("SEQ", $sformatf("{body_randomize} time = %0t \n ('-') ('-') ('-') \n m_item.a=%h \n a_real=%h \n\n ",$time,m_item.a,a_real), UVM_LOW)
       b_real = $bitstoreal(m_item.b);
       
       correct_value_real = a_real+b_real;
@@ -166,14 +120,14 @@ end
    m_item.correct_value = z_output[i];
    */
 
-    	////`uvm_info("SEQ", $sformatf("{body}Generate new sequence_item"), UVM_LOW)
+    	//`uvm_info("SEQ", $sformatf("{body}Generate new sequence_item"), UVM_LOW)
       //在每次生成新的sequence_item(transaction_item)的时候，打印一下这时候sequence_item里面有的a b 和 correct_value
-      //`uvm_info("SEQ", $sformatf("{body} time = %0t \n\n  ('-') ('-') ('-') ('-') ('-') \n\n ",$time), UVM_LOW)
-      //`uvm_info("SEQ", $sformatf("{body} time = %0t \n  ('-') print m_item in sequence \n ",$time), UVM_LOW)
-    	//m_item.print();
+      `uvm_info("SEQ", $sformatf("{body} time = %0t \n\n  ('-') ('-') ('-') ('-') ('-') \n\n ",$time), UVM_LOW)
+      `uvm_info("SEQ", $sformatf("{body} time = %0t \n  ('-') print m_item in sequence \n ",$time), UVM_LOW)
+    	m_item.print();
       	finish_item(m_item);
     end
-    //`uvm_info("SEQ", $sformatf("{body} time = %0t Done generation of %0d sequence_item",$time, num), UVM_LOW)
+    `uvm_info("SEQ", $sformatf("{body} time = %0t Done generation of %0d sequence_item",$time, num), UVM_LOW)
   endtask
 endclass
 
@@ -191,7 +145,7 @@ class driver extends uvm_driver #(transaction_item);
   uvm_event ev;
   
   virtual function void build_phase(uvm_phase phase);
-  //`uvm_info("DRV", $sformatf("{build_phase} time = %0t 1.get DUT_if / 2.creat event",$time), UVM_LOW)
+  `uvm_info("DRV", $sformatf("{build_phase} time = %0t 1.get DUT_if / 2.creat event",$time), UVM_LOW)
     super.build_phase(phase);
     if (!uvm_config_db#(virtual DUT_if)::get(this, "", "DUT_vif", vif))
       `uvm_fatal("DRV", "Could not get vif")
@@ -202,7 +156,7 @@ class driver extends uvm_driver #(transaction_item);
 
   
   virtual task run_phase(uvm_phase phase);
-  //`uvm_info("DRV", $sformatf("{run_phase} time = %0t 1.seq_item_port.get_next_item(m_item); / 2.drive_item(m_item);",$time), UVM_LOW)
+  `uvm_info("DRV", $sformatf("{run_phase} time = %0t 1.seq_item_port.get_next_item(m_item); / 2.drive_item(m_item);",$time), UVM_LOW)
     super.run_phase(phase);
     forever begin
       transaction_item m_item;
@@ -211,10 +165,10 @@ class driver extends uvm_driver #(transaction_item);
       begin
 	      //fork//改进程控制区drive_item里面改，不要调get_next_item这种系统默认函数的顺序
       seq_item_port.get_next_item(m_item);
-      //`uvm_info("DRV", $sformatf("{run_phase} time = %0t \n ('-') ('-') ('-') \n m_item.a=%h \n  ",$time,m_item.a), UVM_LOW)
+      `uvm_info("DRV", $sformatf("{run_phase} time = %0t \n ('-') ('-') ('-') \n m_item.a=%h \n  ",$time,m_item.a), UVM_LOW)
       drive_item(m_item);//30发第一个 1030发第二个
       //ev = uvm_event_pool::get_global("ev_ab");//放在build_phase好一点
-      ////`uvm_info("DRV", $sformatf("{run_phase} trigger event"), UVM_LOW)
+      //`uvm_info("DRV", $sformatf("{run_phase} trigger event"), UVM_LOW)
       //ev.trigger();//第一次是1050才触发 第二次开始才是是及时的2030立刻触发
       //join
       seq_item_port.item_done();
@@ -229,8 +183,8 @@ class driver extends uvm_driver #(transaction_item);
     vif.driver_cb.correct_value 	<= m_item.correct_value;
     //打印出driver drive去if里的m_item的内容 ：
     //下面用get_type_name()就是简单地打印出driver
-    ////`uvm_info(get_type_name(), $sformatf("{drive_item} time = %0t \n  ('-') print m_item drive to interface \n a=0x%h \n b=0x%h \n correct_value=0x%h",$time, m_item.a, m_item.b, m_item.correct_value), UVM_LOW)
-    //`uvm_info("DRV", $sformatf("{drive_item} time = %0t \n  ('-') print m_item drive to interface \n a=0x%h \n b=0x%h \n correct_value=0x%h",$time, m_item.a, m_item.b, m_item.correct_value), UVM_LOW)
+    //`uvm_info(get_type_name(), $sformatf("{drive_item} time = %0t \n  ('-') print m_item drive to interface \n a=0x%h \n b=0x%h \n correct_value=0x%h",$time, m_item.a, m_item.b, m_item.correct_value), UVM_LOW)
+    `uvm_info("DRV", $sformatf("{drive_item} time = %0t \n  ('-') print m_item drive to interface \n a=0x%h \n b=0x%h \n correct_value=0x%h",$time, m_item.a, m_item.b, m_item.correct_value), UVM_LOW)
     //等待一段时间来让DUT计算完，其实根据仿真这里200ns就足够了
     #1000;
     ev.trigger();
@@ -252,7 +206,7 @@ class monitor extends uvm_monitor;//monitor属于agent(a0)，所以它是有权�
   uvm_event ev;
   
   virtual function void build_phase(uvm_phase phase);
-  //`uvm_info("MON", $sformatf("{build_phase} time = %0t 1.build uvm_analysis_port",$time), UVM_LOW)
+  `uvm_info("MON", $sformatf("{build_phase} time = %0t 1.build uvm_analysis_port",$time), UVM_LOW)
     super.build_phase(phase);
     if (!uvm_config_db#(virtual DUT_if)::get(this, "", "DUT_vif", vif))
       `uvm_fatal("MON", "Could not get vif")
@@ -261,10 +215,10 @@ class monitor extends uvm_monitor;//monitor属于agent(a0)，所以它是有权�
   endfunction
   
   virtual task run_phase(uvm_phase phase);
-  //`uvm_info("MON", $sformatf("{run_phase} time = %0t 1.wait for event / 2.sample_port",$time), UVM_LOW)
+  `uvm_info("MON", $sformatf("{run_phase} time = %0t 1.wait for event / 2.sample_port",$time), UVM_LOW)
     super.run_phase(phase);
       ev = uvm_event_pool::get_global("ev_ab");
-      ////`uvm_info(get_type_name(),$sformatf("{run_phase} waiting for event triggered for first time"),UVM_LOW)//get_type_name get的就是new里面的string name = monitor
+      //`uvm_info(get_type_name(),$sformatf("{run_phase} waiting for event triggered for first time"),UVM_LOW)//get_type_name get的就是new里面的string name = monitor
       ev.wait_trigger;
       sample_port("Thread0");
   endtask
@@ -274,20 +228,20 @@ class monitor extends uvm_monitor;//monitor属于agent(a0)，所以它是有权�
       @(posedge vif.clk);
       if (ev.is_on) begin
         transaction_item item = new;
-       //`uvm_info("MON",$sformatf("{sample port} time = %0t event triggerd",$time),UVM_LOW)	
+       `uvm_info("MON",$sformatf("{sample port} time = %0t event triggerd",$time),UVM_LOW)	
         item.a = vif.a;
         item.b = vif.b;
         item.return_value = vif.return_value;
         item.correct_value = vif.correct_value;
-        //`uvm_info("MON",$sformatf("{sample port} time = %0t \n  ('-') print item sampled by Monitor",$time),UVM_LOW)	
-       ////`uvm_info("MON",$sformatf("{sample port} time = %0t 打印出monitor通过sample_port从if中取到的值",$time),UVM_LOW)	
-        //item.print(); 
+        `uvm_info("MON",$sformatf("{sample port} time = %0t \n  ('-') print item sampled by Monitor",$time),UVM_LOW)	
+       //`uvm_info("MON",$sformatf("{sample port} time = %0t 打印出monitor通过sample_port从if中取到的值",$time),UVM_LOW)	
+        item.print(); 
        
         @(posedge vif.clk);
         mon_analysis_port.write(item);
 
 	ev.reset;
-  //`uvm_info("MON",$sformatf("{sample port} time = %0t event reset",$time),UVM_LOW)	
+  `uvm_info("MON",$sformatf("{sample port} time = %0t event reset",$time),UVM_LOW)	
 end	
       end
   endtask
@@ -308,14 +262,14 @@ class agent extends uvm_agent;
 
   virtual function void build_phase(uvm_phase phase);
     super.build_phase(phase);
-    //`uvm_info("AGENT", $sformatf("{build_phase} time = %0t build s0 d0 m0",$time), UVM_LOW)
+    `uvm_info("AGENT", $sformatf("{build_phase} time = %0t build s0 d0 m0",$time), UVM_LOW)
     s0 = uvm_sequencer#(transaction_item)::type_id::create("s0", this);
     d0 = driver::type_id::create("d0", this);
     m0 = monitor::type_id::create("m0", this);
   endfunction
   
   virtual function void connect_phase(uvm_phase phase);
-  //`uvm_info("AGENT", $sformatf("{connect_phase} time = %0t connect s0.seq_item_export+d0.seq_item_port",$time), UVM_LOW)
+  `uvm_info("AGENT", $sformatf("{connect_phase} time = %0t connect s0.seq_item_export+d0.seq_item_port",$time), UVM_LOW)
     super.connect_phase(phase);
     d0.seq_item_port.connect(s0.seq_item_export);
   endfunction
@@ -332,69 +286,31 @@ class scoreboard extends uvm_scoreboard;
   endfunction
   
   uvm_analysis_imp #(transaction_item, scoreboard) m_analysis_imp;
-  static int count_total = 0;
-  static int count_pass_total = 0;
-  static int count_pass_nan = 0;
-  static int count_pass_pos = 0;
-  static int count_pass_neg = 0;
-  static int count_pass_zero = 0;
-  static int count_pass_normal = 0;
+  static int count_pass = 0;
     
   virtual function void build_phase(uvm_phase phase);
-  ////`uvm_info("SB", $sformatf("{build_phase} time = %0t build uvm_analysis_imp",$time), UVM_LOW)
+  `uvm_info("SB", $sformatf("{build_phase} time = %0t build uvm_analysis_imp",$time), UVM_LOW)
     super.build_phase(phase);
     m_analysis_imp = new("m_analysis_imp", this);
   endfunction
   
   virtual function write(transaction_item item);      
      begin
-       count_total = count_total+1;
 	     if(item.return_value == item.correct_value)
 	     begin
-         count_pass_total = count_pass_total+1;
-         /*
-         switch(flags_inst)
-         {
-           case NAN_FLAG:
-           count_pass_nan++;
-           case POS_FLAG:
-           count_pass_pos++;
-           case NEG_FLAG:
-           count_pass_neg++;
-           case ZERO_FLAG:
-           count_pass_zero++;
-           case NORMAL_FLAG:
-           count_pass_normal++;
-         }
-         */
-         case (flags_inst)
-           NAN_FLAG:
-           count_pass_nan++;
-           POS_FLAG:
-           count_pass_pos++;
-           NEG_FLAG:
-           count_pass_neg++;
-           ZERO_FLAG:
-           count_pass_zero++;
-           NORMAL_FLAG:
-           count_pass_normal++;
-           default: 
-           ;
-         endcase
-
-
-		     //$display("---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------");
-          ////`uvm_info("SCBD", $sformatf("PASS! time = %0t \n  ('-') compare result \n a=0x%h \n b=0x%h \n return_value=0x%h \n correct_value=0x%h ",$time, item.a, item.b, item.return_value,item.correct_value), UVM_LOW)
-          //`uvm_info("SCBD", $sformatf("PASS! time = %0t \n  ('-') compare result \n a=0x%h \n b=0x%h \n return_value=0x%h \n correct_value=0x%h \n",$time, item.a, item.b, item.return_value,item.correct_value), UVM_LOW)
-		     //$display("\ncount_pass = %d",count_pass);//在这通过static的count_pass来实现输出正确的个数
-         //$display("---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------");
+         count_pass = count_pass+1;
+		     $display("---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------");
+          //`uvm_info("SCBD", $sformatf("PASS! time = %0t \n  ('-') compare result \n a=0x%h \n b=0x%h \n return_value=0x%h \n correct_value=0x%h ",$time, item.a, item.b, item.return_value,item.correct_value), UVM_LOW)
+          `uvm_info("SCBD", $sformatf("PASS! time = %0t \n  ('-') compare result \n a=0x%h \n b=0x%h \n return_value=0x%h \n correct_value=0x%h ",$time, item.a, item.b, item.return_value,item.correct_value), UVM_LOW)
+		     $display("\ncount_pass = %d",count_pass);//在这通过static的count_pass来实现输出正确的个数
+         $display("---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------");
 	     end
   else
   begin
-		     //$display("---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------");
-          ////`uvm_info("SCBD", $sformatf("FAIL! time = %0t \n  ('-') a=0x%h b=0x%h return_value=0x%h correct_value=0x%h ",$time, item.a, item.b, item.return_value,item.correct_value), UVM_LOW)
-          //`uvm_info("SCBD", $sformatf("FAIL! time = %0t \n  ('-') \n a=0x%h \n b=0x%h \n return_value=0x%h \n correct_value=0x%h \n",$time, item.a, item.b, item.return_value,item.correct_value), UVM_LOW)
-		     //$display("---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------");
+		     $display("---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------");
+          //`uvm_info("SCBD", $sformatf("FAIL! time = %0t \n  ('-') a=0x%h b=0x%h return_value=0x%h correct_value=0x%h ",$time, item.a, item.b, item.return_value,item.correct_value), UVM_LOW)
+          `uvm_info("SCBD", $sformatf("FAIL! time = %0t \n  ('-') a=0x%h \n b=0x%h \n return_value=0x%h \n correct_value=0x%h ",$time, item.a, item.b, item.return_value,item.correct_value), UVM_LOW)
+		     $display("---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------");
 	     end
       end
   endfunction
@@ -413,14 +329,14 @@ class env extends uvm_env;//env没有直接用到vif，所以就不用config_db:
   scoreboard	sb0; 	
     
   virtual function void build_phase(uvm_phase phase);
-  //`uvm_info("ENV", $sformatf("{build_phase} time = %0t build agent(a0) scoreboard(sb0)",$time), UVM_LOW)
+  `uvm_info("ENV", $sformatf("{build_phase} time = %0t build agent(a0) scoreboard(sb0)",$time), UVM_LOW)
     super.build_phase(phase);
     a0 = agent::type_id::create("a0", this);
     sb0 = scoreboard::type_id::create("sb0", this);
   endfunction
   
   virtual function void connect_phase(uvm_phase phase);
-  //`uvm_info("ENV", $sformatf("{connect_phase} time = %0t connect a0.m0.mon_analysis_port + sb0.m_analysis_imp",$time), UVM_LOW)
+  `uvm_info("ENV", $sformatf("{connect_phase} time = %0t connect a0.m0.mon_analysis_port + sb0.m_analysis_imp",$time), UVM_LOW)
     super.connect_phase(phase);
     a0.m0.mon_analysis_port.connect(sb0.m_analysis_imp);
   endfunction
@@ -440,7 +356,7 @@ class test extends uvm_test;
   virtual DUT_if vif;
   
   virtual function void build_phase(uvm_phase phase);
-  //`uvm_info("TEST", $sformatf("{build_phase} time = %0t build env(e0)",$time), UVM_LOW)
+  `uvm_info("TEST", $sformatf("{build_phase} time = %0t build env(e0)",$time), UVM_LOW)
     super.build_phase(phase);
     e0 = env::type_id::create("e0", this);
     if (!uvm_config_db#(virtual DUT_if)::get(this, "", "DUT_vif", vif))
@@ -452,7 +368,7 @@ class test extends uvm_test;
   virtual task run_phase(uvm_phase phase);
   
     gen_item_seq seq = gen_item_seq::type_id::create("seq");
-    //`uvm_info("TEST", $sformatf("{run_phase} time = %0t initialize uvm_sequence / apply_reset / randomize uvm_sequence / uvm_sequence.start(uvm_sequencer)",$time), UVM_LOW)
+    `uvm_info("TEST", $sformatf("{run_phase} time = %0t initialize uvm_sequence / apply_reset / randomize uvm_sequence / uvm_sequence.start(uvm_sequencer)",$time), UVM_LOW)
     phase.raise_objection(this);//?
     $display("apply_reset");
     apply_reset();
